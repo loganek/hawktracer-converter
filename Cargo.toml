@@ -1,0 +1,18 @@
+[package]
+name = "hawktracer-converter"
+version = "0.1.0"
+authors = ["Marcin Kolny <marcin.kolny@gmail.com>"]
+edition = "2018"
+
+[lib]
+name = "hawktracer_converter_lib"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hawktracer-converter"
+path = "src/main.rs"
+
+[dependencies]
+hawktracer-parser = "0.2.0"
+clap = "2.32.0"
+chrono = "0.4.6"

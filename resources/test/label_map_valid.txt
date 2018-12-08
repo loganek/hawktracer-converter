@@ -1,0 +1,3 @@
+rust label1 1
+cpp label2 2
+rust label3 3

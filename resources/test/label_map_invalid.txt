@@ -1,0 +1,4 @@
+single_value
+category but_no_id
+category id_not_a_number five
+rust valid_label 8
