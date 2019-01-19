@@ -36,7 +36,7 @@ impl std::fmt::Display for EventProcessingError {
 
 impl std::error::Error for EventProcessingError {}
 
-impl<'a> Converter for ChromeTracingConverter {
+impl Converter for ChromeTracingConverter {
     fn process_event(
         &mut self,
         event: &Event,
@@ -72,7 +72,7 @@ impl<'a> Converter for ChromeTracingConverter {
     }
 }
 
-impl<'a> ChromeTracingConverter {
+impl ChromeTracingConverter {
     pub fn new(writable: Box<std::io::Write>, label_getter: LabelGetter) -> ChromeTracingConverter {
         ChromeTracingConverter {
             writable,

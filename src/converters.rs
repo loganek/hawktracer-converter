@@ -15,8 +15,6 @@ pub trait Converter {
         event: &hawktracer_parser::Event,
         reg: &hawktracer_parser::EventKlassRegistry,
     ) -> Result<(), Box<std::error::Error>>;
-
-    fn close_converter(&mut self) {}
 }
 
 pub trait ConverterFactory {

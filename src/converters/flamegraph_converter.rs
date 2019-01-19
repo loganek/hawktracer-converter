@@ -154,7 +154,7 @@ impl FlamegraphConverter {
     }
 }
 
-impl<'a> Converter for FlamegraphConverter {
+impl Converter for FlamegraphConverter {
     fn process_event(
         &mut self,
         event: &hawktracer_parser::Event,
@@ -180,9 +180,11 @@ impl<'a> Converter for FlamegraphConverter {
 
         Ok(())
     }
+}
 
-    fn close_converter(&mut self) {
-        self.generate_flamegraph()
+impl Drop for FlamegraphConverter {
+    fn drop(&mut self) {
+        self.generate_flamegraph();
     }
 }
 

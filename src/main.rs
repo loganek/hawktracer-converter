@@ -147,6 +147,4 @@ fn main() {
             }
         }
     }
-
-    converter.close_converter();
 }
