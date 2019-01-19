@@ -32,15 +32,38 @@ fn create_output_stream(is_stdout: bool, output_file: &str) -> Box<std::io::Writ
     )
 }
 
+fn wait_for_connection(socket_addr: std::net::SocketAddr) -> std::io::Result<Box<std::io::Read>> {
+    use std::io::ErrorKind;
+    loop {
+        let tcp_stream = std::net::TcpStream::connect(socket_addr);
+
+        match tcp_stream {
+            Ok(tcp_stream) => return Ok(Box::new(tcp_stream)),
+            Err(err) => match err.kind() {
+                ErrorKind::ConnectionReset
+                | ErrorKind::BrokenPipe
+                | ErrorKind::AddrNotAvailable
+                | ErrorKind::ConnectionAborted => {
+                    eprintln!("Connection error: {:?}", err);
+                    return Err(err);
+                }
+                _ => {}
+            },
+        }
+
+        std::thread::sleep(std::time::Duration::from_millis(200));
+    }
+}
+
 fn create_event_reader(source: &str) -> std::io::Result<hawktracer_parser::reader::EventReader> {
     let source_obj: Box<std::io::Read> =
         if let Ok(ip_address) = source.parse::<std::net::Ipv4Addr>() {
-            Box::new(std::net::TcpStream::connect(std::net::SocketAddr::new(
+            wait_for_connection(std::net::SocketAddr::new(
                 std::net::IpAddr::V4(ip_address),
                 8765,
-            ))?)
+            ))?
         } else if let Ok(ip_address) = source.parse::<std::net::SocketAddr>() {
-            Box::new(std::net::TcpStream::connect(ip_address)?)
+            wait_for_connection(ip_address)?
         } else {
             Box::new(std::fs::File::open(source)?)
         };
