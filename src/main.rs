@@ -1,4 +1,6 @@
 use hawktracer_converter_lib as hcl;
+use indicatif;
+use indicatif::{ProgressBar, ProgressStyle};
 
 fn create_output_path(path: &str) -> String {
     let now = chrono::Local::now();
@@ -26,6 +28,7 @@ fn create_output_stream(is_stdout: bool, output_file: &str) -> Box<std::io::Writ
     }
 
     let output_path = create_output_path(output_file);
+    eprintln!("Data will be saved at: {:?}", output_path);
     Box::new(
         std::fs::File::create(&output_path)
             .unwrap_or_else(|_| panic!("Can't create output file {}", output_path)),
@@ -139,6 +142,13 @@ fn main() {
 
     let mut reg = hawktracer_parser::EventKlassRegistry::new();
 
+    let pb = ProgressBar::new(30);
+    let spinner_style = ProgressStyle::default_spinner()
+        .tick_chars("/—\\| ")
+        .template("{prefix:.bold.dim} {spinner:.green} {wide_msg}");
+    pb.set_style(spinner_style);
+    pb.set_message(&format!("{}", "Getting data. Press [Ctrl+C to finish]"));
+    let mut event_count = 0;
     while let Ok(event) = reader.read_event(&mut reg) {
         if let Err(err) = converter.process_event(&event.flat_event(), &reg) {
             // TODO flat optional from command line
@@ -146,5 +156,13 @@ fn main() {
                 eprintln!("Error processing event: {}", err);
             }
         }
+        
+        event_count += 1;
+        if event_count > 100 {
+            pb.tick();
+            event_count = 0;
+        }
     }
+
+    pb.finish_with_message("Done tracing!");
 }
