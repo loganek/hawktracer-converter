@@ -13,6 +13,6 @@ name = "hawktracer-converter"
 path = "src/main.rs"
 
 [dependencies]
-hawktracer-parser = "0.2.0"
+hawktracer-parser = "0.2.1"
 clap = "2.32.0"
 chrono = "0.4.6"
