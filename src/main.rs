@@ -58,6 +58,17 @@ fn wait_for_connection(socket_addr: std::net::SocketAddr) -> std::io::Result<Box
     }
 }
 
+fn create_spinner(message: &str) -> ProgressBar {
+    let pb = ProgressBar::new(30);
+    let spinner_style = ProgressStyle::default_spinner()
+        .tick_chars("/—\\| ")
+        .template("{prefix:.bold.dim} {spinner:.green} {wide_msg}");
+    pb.set_style(spinner_style);
+    pb.set_message(message);
+    pb.enable_steady_tick(200);
+    pb
+}
+
 fn create_event_reader(source: &str) -> std::io::Result<hawktracer_parser::reader::EventReader> {
     let source_obj: Box<std::io::Read> =
         if let Ok(ip_address) = source.parse::<std::net::Ipv4Addr>() {
@@ -137,18 +148,15 @@ fn main() {
         )
         .expect("Unable to create converter");
 
+    let connection_spinner = create_spinner(&format!("Waiting for connection to source: {}", &source[..]));
+
     let mut reader = create_event_reader(source)
         .unwrap_or_else(|_| panic!("Unable to create reader from source: {}", &source[..]));
-
+    connection_spinner.finish_with_message(&format!("Connected to source: {}", &source[..]));
     let mut reg = hawktracer_parser::EventKlassRegistry::new();
 
-    let pb = ProgressBar::new(30);
-    let spinner_style = ProgressStyle::default_spinner()
-        .tick_chars("/—\\| ")
-        .template("{prefix:.bold.dim} {spinner:.green} {wide_msg}");
-    pb.set_style(spinner_style);
-    pb.set_message(&format!("{}", "Getting data. Press [Ctrl+C to finish]"));
-    let mut event_count = 0;
+    let data_read_spinner = create_spinner(&format!("{}", "Getting data. Press [Ctrl+C to finish]"));
+
     while let Ok(event) = reader.read_event(&mut reg) {
         if let Err(err) = converter.process_event(&event.flat_event(), &reg) {
             // TODO flat optional from command line
@@ -156,13 +164,7 @@ fn main() {
                 eprintln!("Error processing event: {}", err);
             }
         }
-        
-        event_count += 1;
-        if event_count > 100 {
-            pb.tick();
-            event_count = 0;
-        }
     }
 
-    pb.finish_with_message("Done tracing!");
+    data_read_spinner.finish_with_message("Done tracing!");
 }
