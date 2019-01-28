@@ -78,7 +78,7 @@ fn main() {
     let matches = clap::App::new("hawktracer-converter")
         .about("Converts HawkTracer data stream to well-known data formats")
         .author("Marcin Kolny <marcin.kolny@gmail.com>")
-        .version("0.1.0")
+        .version(env!("CARGO_PKG_VERSION"))
         .arg(
             clap::Arg::with_name("source")
                 .long("source")
