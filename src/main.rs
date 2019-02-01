@@ -1,3 +1,4 @@
+use ctrlc;
 use hawktracer_converter_lib as hcl;
 use indicatif;
 use indicatif::{ProgressBar, ProgressStyle};
@@ -86,6 +87,17 @@ fn create_event_reader(source: &str) -> std::io::Result<hawktracer_parser::reade
     Ok(hawktracer_parser::reader::EventReader::new(provider))
 }
 
+fn setup_stop_handler() -> std::sync::Arc<std::sync::atomic::AtomicBool> {
+    let running = std::sync::Arc::new(std::sync::atomic::AtomicBool::new(true));
+    let r = running.clone();
+    ctrlc::set_handler(move || {
+        r.store(false, std::sync::atomic::Ordering::SeqCst);
+    })
+    .expect("Error setting Ctrl-C handler");
+
+    running
+}
+
 fn main() {
     let converter_manager = hcl::ConverterManager::new();
 
@@ -148,21 +160,32 @@ fn main() {
         )
         .expect("Unable to create converter");
 
-    let connection_spinner = create_spinner(&format!("Waiting for connection to source: {}", &source[..]));
+    let connection_spinner = create_spinner(&format!(
+        "Waiting for connection to source: {}",
+        &source[..]
+    ));
 
     let mut reader = create_event_reader(source)
         .unwrap_or_else(|_| panic!("Unable to create reader from source: {}", &source[..]));
     connection_spinner.finish_with_message(&format!("Connected to source: {}", &source[..]));
     let mut reg = hawktracer_parser::EventKlassRegistry::new();
 
-    let data_read_spinner = create_spinner(&format!("{}", "Getting data. Press [Ctrl+C to finish]"));
+    let data_read_spinner =
+        create_spinner(&format!("{}", "Getting data. Press [Ctrl+C to finish]"));
 
-    while let Ok(event) = reader.read_event(&mut reg) {
-        if let Err(err) = converter.process_event(&event.flat_event(), &reg) {
-            // TODO flat optional from command line
-            if is_verbose {
-                eprintln!("Error processing event: {}", err);
+    let running_flag = setup_stop_handler();
+
+    while running_flag.load(std::sync::atomic::Ordering::SeqCst) {
+        match reader.read_event(&mut reg) {
+            Ok(event) => {
+                if let Err(err) = converter.process_event(&event.flat_event(), &reg) {
+                    // TODO flat optional from command line
+                    if is_verbose {
+                        eprintln!("Error processing event: {}", err);
+                    }
+                }
             }
+            Err(_) => break,
         }
     }
 
