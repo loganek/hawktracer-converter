@@ -1,4 +1,6 @@
 use hawktracer_converter_lib as hcl;
+use indicatif;
+use indicatif::{ProgressBar, ProgressStyle};
 
 fn create_output_path(path: &str) -> String {
     let now = chrono::Local::now();
@@ -26,6 +28,7 @@ fn create_output_stream(is_stdout: bool, output_file: &str) -> Box<std::io::Writ
     }
 
     let output_path = create_output_path(output_file);
+    eprintln!("Data will be saved at: {:?}", output_path);
     Box::new(
         std::fs::File::create(&output_path)
             .unwrap_or_else(|_| panic!("Can't create output file {}", output_path)),
@@ -53,6 +56,17 @@ fn wait_for_connection(socket_addr: std::net::SocketAddr) -> std::io::Result<Box
 
         std::thread::sleep(std::time::Duration::from_millis(200));
     }
+}
+
+fn create_spinner(message: &str) -> ProgressBar {
+    let pb = ProgressBar::new(30);
+    let spinner_style = ProgressStyle::default_spinner()
+        .tick_chars("/—\\| ")
+        .template("{prefix:.bold.dim} {spinner:.green} {wide_msg}");
+    pb.set_style(spinner_style);
+    pb.set_message(message);
+    pb.enable_steady_tick(200);
+    pb
 }
 
 fn create_event_reader(source: &str) -> std::io::Result<hawktracer_parser::reader::EventReader> {
@@ -134,10 +148,14 @@ fn main() {
         )
         .expect("Unable to create converter");
 
+    let connection_spinner = create_spinner(&format!("Waiting for connection to source: {}", &source[..]));
+
     let mut reader = create_event_reader(source)
         .unwrap_or_else(|_| panic!("Unable to create reader from source: {}", &source[..]));
-
+    connection_spinner.finish_with_message(&format!("Connected to source: {}", &source[..]));
     let mut reg = hawktracer_parser::EventKlassRegistry::new();
+
+    let data_read_spinner = create_spinner(&format!("{}", "Getting data. Press [Ctrl+C to finish]"));
 
     while let Ok(event) = reader.read_event(&mut reg) {
         if let Err(err) = converter.process_event(&event.flat_event(), &reg) {
@@ -147,4 +165,6 @@ fn main() {
             }
         }
     }
+
+    data_read_spinner.finish_with_message("Done tracing!");
 }
