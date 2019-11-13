@@ -113,7 +113,7 @@ impl FlamegraphConverter {
         }
     }
 
-    pub fn generate_flamegraph(&mut self) {
+    pub fn generate_flamegraph(&mut self) -> std::io::Result<()> {
         self.items.sort_by_key(|k| k.start_ts);
 
         for item in &self.items {
@@ -127,7 +127,8 @@ impl FlamegraphConverter {
         for stack in self.stacks.values() {
             self.merge_stacks(&super_root, &stack.root_item);
         }
-        HTMLFlameGraphWritter::new(&mut self.writable).write_flamegraph(&super_root);
+        
+        HTMLFlameGraphWritter::new(&mut self.writable).write_flamegraph(&super_root)
     }
 
     fn merge_stacks(&self, super_stack: &StackItemPtr, stack: &StackItemPtr) {
@@ -184,7 +185,7 @@ impl Converter for FlamegraphConverter {
 
 impl Drop for FlamegraphConverter {
     fn drop(&mut self) {
-        self.generate_flamegraph();
+        self.generate_flamegraph().unwrap();
     }
 }
 

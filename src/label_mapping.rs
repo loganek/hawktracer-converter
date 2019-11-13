@@ -1,4 +1,4 @@
-use hawktracer_parser::{Event, Value, CoreEventKlassId};
+use hawktracer_parser::{CoreEventKlassId, Event, Value};
 use std::io::BufRead;
 
 // TODO: SUPPORT MAPPING EVENT
@@ -77,9 +77,12 @@ impl LabelGetter {
 
     // TODO TEST ME PLEASE!
     fn update_mapping_event_info(&mut self, event: &Event) {
-        if self.mapping_event_id.is_none() && event.get_klass_id() == CoreEventKlassId::KlassInfo as u32 {
+        if self.mapping_event_id.is_none()
+            && event.get_klass_id() == CoreEventKlassId::KlassInfo as u32
+        {
             let klass_name = event.get_value_string("event_klass_name");
-            if klass_name.is_ok() && klass_name.unwrap() == "HT_StringMappingEvent" { // TODO We should have KlassInfo event wrapper with get_klass_name method in parser
+            if klass_name.is_ok() && klass_name.unwrap() == "HT_StringMappingEvent" {
+                // TODO We should have KlassInfo event wrapper with get_klass_name method in parser
                 self.mapping_event_id = event.get_value_u32("info_klass_id").ok();
             }
         } else if self.mapping_event_id.is_some()

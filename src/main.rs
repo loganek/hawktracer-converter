@@ -36,7 +36,9 @@ fn create_output_stream(is_stdout: bool, output_file: &str) -> Box<dyn std::io::
     )
 }
 
-fn wait_for_connection(socket_addr: std::net::SocketAddr) -> std::io::Result<Box<dyn std::io::Read>> {
+fn wait_for_connection(
+    socket_addr: std::net::SocketAddr,
+) -> std::io::Result<Box<dyn std::io::Read>> {
     use std::io::ErrorKind;
     loop {
         let tcp_stream = std::net::TcpStream::connect(socket_addr);
@@ -177,7 +179,7 @@ fn main() {
     let mut reg = hawktracer_parser::EventKlassRegistry::new();
 
     let data_read_spinner =
-        create_spinner(&format!("{}", "Getting data. Press [Ctrl+C to finish]"));
+        create_spinner(&"Getting data. Press [Ctrl+C to finish]".to_string());
 
     let running_flag = setup_stop_handler();
 
