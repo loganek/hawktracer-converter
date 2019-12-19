@@ -3,7 +3,7 @@ use crate::converters::ConverterFactory;
 use crate::LabelGetter;
 
 pub struct ConverterManager {
-    factories: std::vec::Vec<Box<ConverterFactory>>,
+    factories: std::vec::Vec<Box<dyn ConverterFactory>>,
 }
 
 impl Default for ConverterManager {
@@ -15,7 +15,7 @@ impl Default for ConverterManager {
 impl ConverterManager {
     pub fn new() -> ConverterManager {
         let mut manager = ConverterManager {
-            factories: std::vec::Vec::<Box<ConverterFactory>>::new(),
+            factories: std::vec::Vec::<Box<dyn ConverterFactory>>::new(),
         };
         manager.load_embedded_converters();
         manager
@@ -30,9 +30,9 @@ impl ConverterManager {
     pub fn create_converter(
         &self,
         name: &str,
-        writable: Box<std::io::Write>,
+        writable: Box<dyn std::io::Write>,
         label_getter: LabelGetter,
-    ) -> Option<Box<Converter>> {
+    ) -> Option<Box<dyn Converter>> {
         for factory in &self.factories {
             if name == factory.get_name() {
                 return Some(factory.construct(writable, label_getter));
