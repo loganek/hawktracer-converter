@@ -108,6 +108,7 @@ fn main() {
         .arg(
             clap::Arg::with_name("source")
                 .long("source")
+                .short("s")
                 .help("Data source description (either filename, or server address)")
                 .required(true)
                 .takes_value(true),
@@ -115,14 +116,17 @@ fn main() {
         .arg(
             clap::Arg::with_name("format")
                 .long("format")
+                .short("f")
                 .takes_value(true)
                 .required(true)
                 .possible_values(&converter_manager.get_converters()[..])
+                .default_value(converter_manager.get_converters()[0])
                 .help("Conversion format"),
         )
         .arg(
             clap::Arg::with_name("output-file")
                 .long("output-file")
+                .short("o")
                 .takes_value(true)
                 .required_unless("stdout")
                 .help("Output file")
@@ -136,12 +140,14 @@ fn main() {
         .arg(
             clap::Arg::with_name("map-files")
                 .long("map-files")
+                .short("m")
                 .min_values(1)
                 .help("List of mapping files"),
         )
         .arg(
             clap::Arg::with_name("verbose")
                 .long("verbose")
+                .short("v")
                 .help("Print debug information"),
         )
         .get_matches();
