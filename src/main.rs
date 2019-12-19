@@ -23,7 +23,7 @@ fn create_label_getter(values: Option<clap::Values>) -> hcl::LabelGetter {
     hcl::LabelGetter::new(map, vec!["label".to_owned(), "name".to_owned()])
 }
 
-fn create_output_stream(is_stdout: bool, output_file: &str) -> Box<std::io::Write> {
+fn create_output_stream(is_stdout: bool, output_file: &str) -> Box<dyn std::io::Write> {
     if is_stdout {
         return Box::new(std::io::stdout());
     }
@@ -36,7 +36,7 @@ fn create_output_stream(is_stdout: bool, output_file: &str) -> Box<std::io::Writ
     )
 }
 
-fn wait_for_connection(socket_addr: std::net::SocketAddr) -> std::io::Result<Box<std::io::Read>> {
+fn wait_for_connection(socket_addr: std::net::SocketAddr) -> std::io::Result<Box<dyn std::io::Read>> {
     use std::io::ErrorKind;
     loop {
         let tcp_stream = std::net::TcpStream::connect(socket_addr);
@@ -71,7 +71,7 @@ fn create_spinner(message: &str) -> ProgressBar {
 }
 
 fn create_event_reader(source: &str) -> std::io::Result<hawktracer_parser::reader::EventReader> {
-    let source_obj: Box<std::io::Read> =
+    let source_obj: Box<dyn std::io::Read> =
         if let Ok(ip_address) = source.parse::<std::net::Ipv4Addr>() {
             wait_for_connection(std::net::SocketAddr::new(
                 std::net::IpAddr::V4(ip_address),

@@ -14,11 +14,11 @@ pub trait Converter {
         &mut self,
         event: &hawktracer_parser::Event,
         reg: &hawktracer_parser::EventKlassRegistry,
-    ) -> Result<(), Box<std::error::Error>>;
+    ) -> Result<(), Box<dyn std::error::Error>>;
 }
 
 pub trait ConverterFactory {
-    fn construct(&self, writable: Box<std::io::Write>, label_getter: LabelGetter)
-        -> Box<Converter>;
+    fn construct(&self, writable: Box<dyn std::io::Write>, label_getter: LabelGetter)
+        -> Box<dyn Converter>;
     fn get_name(&self) -> &str;
 }

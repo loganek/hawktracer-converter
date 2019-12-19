@@ -5,7 +5,7 @@ use crate::LabelGetter;
 use hawktracer_parser::{Event, EventKlassRegistry};
 
 struct ChromeTracingConverter {
-    writable: Box<std::io::Write>,
+    writable: Box<dyn std::io::Write>,
     header_written: bool,
     label_getter: LabelGetter,
 }
@@ -41,7 +41,7 @@ impl Converter for ChromeTracingConverter {
         &mut self,
         event: &Event,
         reg: &EventKlassRegistry,
-    ) -> Result<(), Box<std::error::Error>> {
+    ) -> Result<(), Box<dyn std::error::Error>> {
         if !self.header_written {
             self.writable.write_all(b"[")?;
             self.header_written = true;
@@ -73,7 +73,7 @@ impl Converter for ChromeTracingConverter {
 }
 
 impl ChromeTracingConverter {
-    pub fn new(writable: Box<std::io::Write>, label_getter: LabelGetter) -> ChromeTracingConverter {
+    pub fn new(writable: Box<dyn std::io::Write>, label_getter: LabelGetter) -> ChromeTracingConverter {
         ChromeTracingConverter {
             writable,
             header_written: false,
@@ -147,8 +147,8 @@ impl<'a> EventWriter<'a> {
 
     pub fn write_event(
         &mut self,
-        writable: &mut std::io::Write,
-    ) -> Result<(), Box<std::error::Error>> {
+        writable: &mut dyn std::io::Write,
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let timestamp = self.ns_to_ms(self.event.get_value_u64("timestamp")?);
 
         let duration = match self.event.get_value_u64("duration") {
@@ -176,9 +176,9 @@ pub struct ChromeTracingConverterFactory {}
 impl ConverterFactory for ChromeTracingConverterFactory {
     fn construct(
         &self,
-        writable: Box<std::io::Write>,
+        writable: Box<dyn std::io::Write>,
         label_getter: LabelGetter,
-    ) -> Box<Converter> {
+    ) -> Box<dyn Converter> {
         Box::new(ChromeTracingConverter::new(writable, label_getter))
     }
 

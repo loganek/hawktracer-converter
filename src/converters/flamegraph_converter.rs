@@ -97,14 +97,14 @@ impl ThreadStack {
 }
 
 struct FlamegraphConverter {
-    writable: Box<std::io::Write>,
+    writable: Box<dyn std::io::Write>,
     stacks: std::collections::HashMap<u32, ThreadStack>,
     items: std::vec::Vec<EventItem>,
     label_getter: LabelGetter,
 }
 
 impl FlamegraphConverter {
-    pub fn new(writable: Box<std::io::Write>, label_getter: LabelGetter) -> FlamegraphConverter {
+    pub fn new(writable: Box<dyn std::io::Write>, label_getter: LabelGetter) -> FlamegraphConverter {
         FlamegraphConverter {
             writable,
             label_getter,
@@ -159,7 +159,7 @@ impl Converter for FlamegraphConverter {
         &mut self,
         event: &hawktracer_parser::Event,
         _reg: &hawktracer_parser::EventKlassRegistry,
-    ) -> Result<(), Box<std::error::Error>> {
+    ) -> Result<(), Box<dyn std::error::Error>> {
         let timestamp = event.get_value_u64("timestamp");
         let duration = event.get_value_u64("duration");
         let thread_id = event.get_value_u32("thread_id");
@@ -193,9 +193,9 @@ pub struct FlamegraphConverterFactory {}
 impl ConverterFactory for FlamegraphConverterFactory {
     fn construct(
         &self,
-        writable: Box<std::io::Write>,
+        writable: Box<dyn std::io::Write>,
         label_getter: LabelGetter,
-    ) -> Box<Converter> {
+    ) -> Box<dyn Converter> {
         Box::new(FlamegraphConverter::new(writable, label_getter))
     }
 
@@ -205,11 +205,11 @@ impl ConverterFactory for FlamegraphConverterFactory {
 }
 
 struct HTMLFlameGraphWritter<'a> {
-    writable: &'a mut std::io::Write,
+    writable: &'a mut dyn std::io::Write,
 }
 
 impl<'a> HTMLFlameGraphWritter<'a> {
-    pub fn new(writable: &'a mut std::io::Write) -> HTMLFlameGraphWritter<'a> {
+    pub fn new(writable: &'a mut dyn std::io::Write) -> HTMLFlameGraphWritter<'a> {
         HTMLFlameGraphWritter { writable }
     }
 
