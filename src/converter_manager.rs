@@ -22,8 +22,8 @@ impl ConverterManager {
     }
 
     fn load_embedded_converters(&mut self) {
-        self.register_static_factory(crate::converters::DebugConverterFactory {});
         self.register_static_factory(crate::converters::ChromeTracingConverterFactory {});
+        self.register_static_factory(crate::converters::DebugConverterFactory {});
         self.register_static_factory(crate::converters::FlamegraphConverterFactory {});
     }
 
