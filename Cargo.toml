@@ -16,7 +16,7 @@ name = "hawktracer_converter_lib"
 path = "src/lib.rs"
 
 [[bin]]
-name = "hawktracer-converter"
+name = "hawktracer-converter-rs"
 path = "src/main.rs"
 
 [dependencies]
