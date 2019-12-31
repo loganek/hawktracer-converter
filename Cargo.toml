@@ -1,6 +1,6 @@
 [package]
 name = "hawktracer-converter"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Marcin Kolny <marcin.kolny@gmail.com>"]
 description = "Converts HawkTracer output format to human-readable/well-known trace event viewers format"
 edition = "2018"
@@ -8,6 +8,7 @@ license = "MIT"
 maintenance = { status = "actively-developed" }
 homepage = "https://www.hawktracer.org"
 repository = "https://github.com/loganek/hawktracer-converter"
+readme = "README.md"
 
 travis-ci = { repository = "loganek/hawktracer-converter" }
 
