@@ -178,8 +178,7 @@ fn main() {
     connection_spinner.finish_with_message(&format!("Connected to source: {}", &source[..]));
     let mut reg = hawktracer_parser::EventKlassRegistry::new();
 
-    let data_read_spinner =
-        create_spinner(&"Getting data. Press [Ctrl+C to finish]".to_string());
+    let data_read_spinner = create_spinner(&"Getting data. Press [Ctrl+C to finish]".to_string());
 
     let running_flag = setup_stop_handler();
 

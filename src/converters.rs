@@ -18,7 +18,10 @@ pub trait Converter {
 }
 
 pub trait ConverterFactory {
-    fn construct(&self, writable: Box<dyn std::io::Write>, label_getter: LabelGetter)
-        -> Box<dyn Converter>;
+    fn construct(
+        &self,
+        writable: Box<dyn std::io::Write>,
+        label_getter: LabelGetter,
+    ) -> Box<dyn Converter>;
     fn get_name(&self) -> &str;
 }
