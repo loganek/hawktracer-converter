@@ -31,7 +31,7 @@ We strive to support as many formats as possible, so please [create an issue](ht
 
 ### Download binary files
 For each release team publishes ready-to-run executables for Linux and Windows operating systems. If you don't have rust environment, and you don't want to build the converter on your own, we recommend to download binaries from the [release page](https://github.com/loganek/hawktracer-converter/releases).  
-You should download a file with the following name: `hawktracer-converter-{VERSION}-{OPERATING_SYSTEM}-{ARCHITECTURE}` (optionally with `.exe` extension for Windows platforms), e.g. `hawktracer-converter-0.0.1-linux-x86_64`.
+You should download a file with the following name: `hawktracer-converter-{VERSION}-{OPERATING_SYSTEM}-{ARCHITECTURE}` (optionally with `.exe` extension for Windows platforms), e.g. `hawktracer-converter-0.1.0-linux-x86_64`.
 
 ### Cargo Install
 If you have [Rust](http://www.rust-lang.org/) developer tools, the easiest way to install the converter is to run cargo install command:
@@ -78,7 +78,7 @@ $ git clone https://github.com/loganek/hawktracer-converter
 $ cd hawktracer-converter
 $ cargo build --release
 $ ./target/release/hawktracer-converter --version
-  hawktracer-converter 0.0.1
+  hawktracer-converter 0.1.0
 ```
 
 ### 

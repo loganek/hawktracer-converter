@@ -1,6 +1,6 @@
 [package]
 name = "hawktracer-converter"
-version = "0.0.1"
+version = "0.1.0"
 authors = ["Marcin Kolny <marcin.kolny@gmail.com>"]
 description = "Converts HawkTracer output format to human-readable/well-known trace event viewers format"
 edition = "2018"
