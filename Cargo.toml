@@ -11,6 +11,10 @@ repository = "https://github.com/loganek/hawktracer-converter"
 
 travis-ci = { repository = "loganek/hawktracer-converter" }
 
+[badges]
+appveyor = { repository = "loganek/hawktracer-converter" }
+travis-ci = { repository = "loganek/hawktracer-converter" }
+
 [lib]
 name = "hawktracer_converter_lib"
 path = "src/lib.rs"
