@@ -55,3 +55,88 @@ impl ConverterManager {
         self.factories.push(Box::new(format));
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::LabelMap;
+    use std::iter::Iterator;
+
+    struct DummyConverter {}
+
+    impl Converter for DummyConverter {
+        fn process_event(
+            &mut self,
+            _event: &hawktracer_parser::Event,
+            _reg: &hawktracer_parser::EventKlassRegistry,
+        ) -> Result<(), Box<dyn std::error::Error>> {
+            Ok(())
+        }
+    }
+
+    impl DummyConverter {
+        pub fn new() -> DummyConverter {
+            DummyConverter {}
+        }
+    }
+
+    pub struct DummyConverterFactory {}
+
+    impl ConverterFactory for DummyConverterFactory {
+        fn construct(
+            &self,
+            _writable: Box<dyn std::io::Write>,
+            _label_getter: LabelGetter,
+        ) -> Box<dyn Converter> {
+            Box::new(DummyConverter::new())
+        }
+
+        fn get_name(&self) -> &str {
+            "dummy"
+        }
+    }
+
+    #[test]
+    fn create_factory_should_return_none_for_non_existing_converter() {
+        let manager: ConverterManager = Default::default();
+
+        let label_getter = LabelGetter::new(LabelMap::new(), vec![]);
+        assert!(manager
+            .create_converter(
+                "invalid-converter",
+                Box::new(std::io::stdout()),
+                label_getter
+            )
+            .is_none());
+    }
+
+    #[test]
+    fn get_converters_should_return_newly_registered_converter() {
+        let mut manager: ConverterManager = Default::default();
+        manager.register_static_factory(DummyConverterFactory {});
+
+        assert!(manager
+            .get_converters()
+            .iter()
+            .find(|&&x| x == "dummy")
+            .is_some());
+    }
+
+    #[test]
+    fn create_converter_should_return_newly_registered_converter() {
+        let mut manager: ConverterManager = Default::default();
+        manager.register_static_factory(DummyConverterFactory {});
+
+        let label_getter = LabelGetter::new(LabelMap::new(), vec![]);
+        let mut converter = manager
+            .create_converter("dummy", Box::new(std::io::stdout()), label_getter)
+            .unwrap();
+
+        assert!(converter
+            .process_event(
+                &hawktracer_parser::Event::new(1, std::collections::HashMap::new()),
+                &hawktracer_parser::EventKlassRegistry::new()
+            )
+            .is_ok());
+    }
+}
