@@ -104,7 +104,10 @@ struct FlamegraphConverter {
 }
 
 impl FlamegraphConverter {
-    pub fn new(writable: Box<dyn std::io::Write>, label_getter: LabelGetter) -> FlamegraphConverter {
+    pub fn new(
+        writable: Box<dyn std::io::Write>,
+        label_getter: LabelGetter,
+    ) -> FlamegraphConverter {
         FlamegraphConverter {
             writable,
             label_getter,
@@ -127,7 +130,7 @@ impl FlamegraphConverter {
         for stack in self.stacks.values() {
             self.merge_stacks(&super_root, &stack.root_item);
         }
-        
+
         HTMLFlameGraphWritter::new(&mut self.writable).write_flamegraph(&super_root)
     }
 
@@ -164,14 +167,15 @@ impl Converter for FlamegraphConverter {
         let timestamp = event.get_value_u64("timestamp");
         let duration = event.get_value_u64("duration");
         let thread_id = event.get_value_u32("thread_id");
-        let (_, label) = self.label_getter.get_label(event);
+        let label_mapping = self.label_getter.get_label(event);
 
-        if timestamp.is_err() || duration.is_err() || label.is_none() || thread_id.is_err() {
+        if timestamp.is_err() || duration.is_err() || label_mapping.is_none() || thread_id.is_err()
+        {
             return Ok(());
         }
 
         let item = EventItem {
-            label: label.unwrap().clone(),
+            label: label_mapping.unwrap().1.clone(),
             thread_id: thread_id.unwrap(),
             start_ts: *timestamp.as_ref().unwrap(),
             stop_ts: timestamp.unwrap() + duration.unwrap(),

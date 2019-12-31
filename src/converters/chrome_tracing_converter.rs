@@ -47,9 +47,9 @@ impl Converter for ChromeTracingConverter {
             self.header_written = true;
         }
 
-        let (label_field, label) = self.label_getter.get_label(event);
-        let label_field = match label_field {
-            Some(label_field) => label_field,
+        let label_mapping = self.label_getter.get_label(event);
+        let label_field = match label_mapping {
+            Some(label_mapping) => label_mapping.0,
             None => {
                 return Err(Box::new(EventProcessingError::new(
                     EventProcessingErrorKind::MissingLabelField,
@@ -58,8 +58,8 @@ impl Converter for ChromeTracingConverter {
             }
         };
 
-        let label = match label {
-            Some(label) => label,
+        let label = match label_mapping {
+            Some(label_mapping) => label_mapping.1,
             None => {
                 return Err(Box::new(EventProcessingError::new(
                     EventProcessingErrorKind::InvalidType,
@@ -73,7 +73,10 @@ impl Converter for ChromeTracingConverter {
 }
 
 impl ChromeTracingConverter {
-    pub fn new(writable: Box<dyn std::io::Write>, label_getter: LabelGetter) -> ChromeTracingConverter {
+    pub fn new(
+        writable: Box<dyn std::io::Write>,
+        label_getter: LabelGetter,
+    ) -> ChromeTracingConverter {
         ChromeTracingConverter {
             writable,
             header_written: false,

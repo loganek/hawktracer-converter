@@ -88,32 +88,29 @@ impl LabelGetter {
         } else if self.mapping_event_id.is_some()
             && event.get_klass_id() == self.mapping_event_id.unwrap()
         {
-            let id = event.get_value_u64("identifier");
-            let label = event.get_value_string("label");
-            if label.is_ok() && id.is_ok() {
-                self.label_map.add_mapping(id.unwrap(), label.unwrap());
+            if let Ok(label) = event.get_value_string("label") {
+                if let Ok(id) = event.get_value_u64("identifier") {
+                    self.label_map.add_mapping(id, label);
+                }
             }
         }
     }
 
-    pub fn get_label<'a>(
-        &'a mut self,
-        event: &'a Event,
-    ) -> (Option<&'a String>, Option<&'a String>) {
+    pub fn get_label<'a>(&'a mut self, event: &'a Event) -> Option<(&'a String, &'a String)> {
         self.update_mapping_event_info(event);
 
         for label_field in &self.label_fields {
             if let Some(value) = event.get_raw_value(label_field) {
                 match value {
                     Value::U64(value) => {
-                        return (Some(label_field), Some(self.label_map.get_label(*value)));
+                        return Some((label_field, self.label_map.get_label(*value)));
                     }
-                    Value::Str(value) => return (Some(label_field), Some(value)),
+                    Value::Str(value) => return Some((label_field, value)),
                     _ => (),
                 }
             }
         }
-        (None, None)
+        None
     }
 }
 
@@ -127,7 +124,7 @@ mod tests {
         path.push("resources/test/label_map_valid.txt");
         let mut map = LabelMap::new();
 
-        map.load_from_file(&path.to_str().unwrap());
+        map.load_from_file(&path.to_str().unwrap()).unwrap();
 
         assert_eq!(map.get_label(1), "label1");
         assert_eq!(map.get_label(2), "label2");
@@ -140,7 +137,7 @@ mod tests {
         path.push("resources/test/label_map_invalid.txt");
         let mut map = LabelMap::new();
 
-        map.load_from_file(&path.to_str().unwrap());
+        map.load_from_file(&path.to_str().unwrap()).unwrap();
 
         assert_eq!(map.get_label(8), "valid_label");
     }
@@ -179,10 +176,10 @@ mod tests {
         let mut getter = LabelGetter::new(LabelMap::new(), vec!["name".to_owned()]);
         let event = make_event("name", Value::Str("test1".to_owned()));
 
-        let (field, value) = getter.get_label(&event);
+        let (field, value) = getter.get_label(&event).unwrap();
 
-        assert_eq!(field.unwrap(), "name");
-        assert_eq!(value.unwrap(), "test1");
+        assert_eq!(field, "name");
+        assert_eq!(value, "test1");
     }
 
     #[test]
@@ -190,10 +187,9 @@ mod tests {
         let mut getter = LabelGetter::new(LabelMap::new(), vec!["unknown".to_owned()]);
         let event = make_event("name", Value::Str("test1".to_owned()));
 
-        let (field, value) = getter.get_label(&event);
+        let mapping = getter.get_label(&event);
 
-        assert!(field.is_none());
-        assert!(value.is_none());
+        assert!(mapping.is_none());
     }
 
     #[test]
@@ -207,9 +203,8 @@ mod tests {
             )),
         );
 
-        let (field, value) = getter.get_label(&event);
+        let mapping = getter.get_label(&event);
 
-        assert!(field.is_none());
-        assert!(value.is_none());
+        assert!(mapping.is_none());
     }
 }
