@@ -72,7 +72,9 @@ fn create_spinner(message: &str) -> ProgressBar {
     pb
 }
 
-fn create_event_reader(source: &str) -> std::io::Result<hawktracer_parser::reader::EventReader> {
+fn create_event_reader(
+    source: &str,
+) -> std::io::Result<hawktracer_parser::event_reader::EventReader> {
     let source_obj: Box<dyn std::io::Read> =
         if let Ok(ip_address) = source.parse::<std::net::Ipv4Addr>() {
             wait_for_connection(std::net::SocketAddr::new(
@@ -86,7 +88,7 @@ fn create_event_reader(source: &str) -> std::io::Result<hawktracer_parser::reade
         };
 
     let provider = hawktracer_parser::data_provider::DataProvider::new(source_obj);
-    Ok(hawktracer_parser::reader::EventReader::new(provider))
+    Ok(hawktracer_parser::event_reader::EventReader::new(provider))
 }
 
 fn setup_stop_handler() -> std::sync::Arc<std::sync::atomic::AtomicBool> {
