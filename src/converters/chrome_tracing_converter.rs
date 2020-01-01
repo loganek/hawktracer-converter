@@ -2,7 +2,7 @@ use crate::converters::Converter;
 use crate::ConverterFactory;
 use crate::LabelGetter;
 
-use hawktracer_parser::{Event, EventKlassRegistry};
+use hawktracer_parser::{Event, EventKlassRegistry, Value};
 
 struct ChromeTracingConverter {
     writable: Box<dyn std::io::Write>,
@@ -115,12 +115,12 @@ impl<'a> EventWriter<'a> {
         }
     }
 
-    fn ns_to_ms(&self, nano_secs: u64) -> u64 {
-        nano_secs / 1000
+    fn ns_to_us(nano_secs: u64) -> u64 {
+        nano_secs / 1000 + (nano_secs % 1000) / 500
     }
 
-    fn format_free_arg<T: std::fmt::Display>(&self, field_name: &str, value: &T) -> String {
-        format!("\"{}\": {}", field_name, value)
+    fn format_free_arg(field_name: &str, value: &Value) -> String {
+        format!("{:?}: {}", field_name, value)
     }
 
     fn get_free_args(&mut self) -> String {
@@ -129,8 +129,10 @@ impl<'a> EventWriter<'a> {
         if let Ok(klass_id) = self.event.get_value_u32("type") {
             if let Some(klass) = self.reg.get_klass_by_id(klass_id) {
                 self.used_fields.insert("type");
-                let klass_str = format!("\"{}\"", klass.get_name());
-                args_str.push_str(&self.format_free_arg("type", &klass_str));
+                args_str.push_str(&EventWriter::format_free_arg(
+                    "type",
+                    &Value::Str(klass.get_name().clone()),
+                ));
             }
         }
 
@@ -143,7 +145,7 @@ impl<'a> EventWriter<'a> {
                 args_str.push(',');
             }
 
-            args_str.push_str(&self.format_free_arg(field_name, value));
+            args_str.push_str(&EventWriter::format_free_arg(field_name, value));
         }
         args_str
     }
@@ -152,10 +154,10 @@ impl<'a> EventWriter<'a> {
         &mut self,
         writable: &mut dyn std::io::Write,
     ) -> Result<(), Box<dyn std::error::Error>> {
-        let timestamp = self.ns_to_ms(self.event.get_value_u64("timestamp")?);
+        let timestamp = EventWriter::ns_to_us(self.event.get_value_u64("timestamp")?);
 
         let duration = match self.event.get_value_u64("duration") {
-            Ok(duration) => self.ns_to_ms(duration),
+            Ok(duration) => EventWriter::ns_to_us(duration),
             Err(_) => 0,
         };
         let thread_id = match self.event.get_value_u32("thread_id") {
@@ -187,5 +189,77 @@ impl ConverterFactory for ChromeTracingConverterFactory {
 
     fn get_name(&self) -> &str {
         "chrome-tracing"
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct TestWritable {
+        buffer: Vec<u8>,
+    }
+
+    impl TestWritable {
+        pub fn new() -> TestWritable {
+            TestWritable { buffer: Vec::new() }
+        }
+
+        pub fn get_buffer(&self) -> &Vec<u8> {
+            &self.buffer
+        }
+    }
+
+    impl std::io::Write for TestWritable {
+        fn write(&mut self, data: &[u8]) -> std::result::Result<usize, std::io::Error> {
+            self.buffer.extend_from_slice(data);
+            Ok(data.len())
+        }
+        fn flush(&mut self) -> std::result::Result<(), std::io::Error> {
+            Ok(())
+        }
+    }
+
+    #[test]
+    fn nanosecond_to_microsecond_test() {
+        assert_eq!(EventWriter::ns_to_us(1234), 1);
+        assert_eq!(EventWriter::ns_to_us(89999), 90);
+        assert_eq!(EventWriter::ns_to_us(60000), 60);
+        assert_eq!(EventWriter::ns_to_us(32500), 33);
+        assert_eq!(EventWriter::ns_to_us(5), 0);
+    }
+
+    #[test]
+    fn format_free_arg_should_format_argument_correctly() {
+        assert_eq!(
+            EventWriter::format_free_arg("field", &Value::U16(12)),
+            "\"field\": 12"
+        );
+        assert_eq!(
+            EventWriter::format_free_arg("field", &Value::Str("value".to_owned())),
+            "\"field\": \"value\""
+        );
+    }
+
+    #[test]
+    fn write_event_should_generate_valid_json_object() {
+        let mut writable = TestWritable::new();
+        let mut values = std::collections::HashMap::new();
+        values.insert("timestamp".to_owned(), Value::U64(5999));
+        values.insert("duration".to_owned(), Value::U64(12000));
+        values.insert("field1".to_owned(), Value::I32(-45));
+        values.insert("thread_id".to_owned(), Value::U32(7));
+        EventWriter::new(
+            &Event::new(99, values),
+            &EventKlassRegistry::new(),
+            "label",
+            "field",
+        )
+        .write_event(&mut writable)
+        .unwrap();
+
+        let data = std::str::from_utf8(writable.get_buffer()).unwrap();
+
+        assert_eq!("{\"name\":\"label\",\"ph\":\"X\",\"ts\":6,\"dur\":12,\"pid\":0,\"tid\":7, \"args\": { \"field1\": -45 } },", data);
     }
 }
