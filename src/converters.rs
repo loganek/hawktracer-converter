@@ -2,6 +2,7 @@ use crate::LabelGetter;
 
 mod debug_converter;
 pub use self::debug_converter::DebugConverterFactory;
+pub use self::debug_converter::JSONDebugConverterFactory;
 
 mod flamegraph_converter;
 pub use self::flamegraph_converter::FlamegraphConverterFactory;
