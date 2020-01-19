@@ -76,7 +76,7 @@ impl LabelGetter {
     }
 
     // TODO TEST ME PLEASE!
-    fn update_mapping_event_info(&mut self, event: &Event) {
+    fn update_mapping_event_info(&mut self, event: &Event) -> bool {
         if self.mapping_event_id.is_none()
             && event.get_klass_id() == CoreEventKlassId::KlassInfo as u32
         {
@@ -91,13 +91,17 @@ impl LabelGetter {
             if let Ok(label) = event.get_value_string("label") {
                 if let Ok(id) = event.get_value_u64("identifier") {
                     self.label_map.add_mapping(id, label);
+                    return true;
                 }
             }
         }
+        false
     }
 
     pub fn get_label<'a>(&'a mut self, event: &'a Event) -> Option<(&'a String, &'a String)> {
-        self.update_mapping_event_info(event);
+        if self.update_mapping_event_info(event) {
+            return None
+        }
 
         for label_field in &self.label_fields {
             if let Some(value) = event.get_raw_value(label_field) {
