@@ -1,0 +1,4 @@
+0.2.0 - 26.01.2020:
+ * add json_debug converter
+ * fix mapping event being included in final trace
+ * add more end-to-end tests
